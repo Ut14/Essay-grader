@@ -1,4 +1,3 @@
-pip install requirements.txt
 from flask import Flask, request, jsonify, render_template
 import pandas as pd
 import tensorflow as tf
