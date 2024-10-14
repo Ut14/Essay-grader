@@ -3,18 +3,24 @@ import pandas as pd
 import tensorflow as tf
 from transformers import TFBertForSequenceClassification, AutoTokenizer
 
-app=Flask(__name__)
+app = Flask(__name__)
 model = TFBertForSequenceClassification.from_pretrained("best_model")
 tokenizer = AutoTokenizer.from_pretrained("tokenizer")
 
-def predict_essay_score(essay_text):
-    # Tokenize the essay input
-    inputs = tokenizer([essay_text], padding='max_length', truncation=True, return_tensors="tf")
+def predict_essay_score(question, essay_text):
+    """
+    Concatenates the question and essay text, tokenizes them, and makes a prediction using the model.
+    """
+    # Concatenate question and essay text with a separator for context
+    combined_text = question + " [SEP] " + essay_text
+
+    # Tokenize the combined input
+    inputs = tokenizer([combined_text], padding='max_length', truncation=True, return_tensors="tf")
 
     # Run the model prediction
     predictions = model(inputs)
 
-    # Extract the predicted score
+    # Extract the predicted score (you may have multiple outputs, adjust this as needed)
     predicted_score = predictions.logits.numpy()[0][0]
     return predicted_score
 
@@ -22,6 +28,7 @@ def predict_essay_score(essay_text):
 def home():
     """Render the home page with a form for input."""
     return render_template('index.html')
+
 @app.route('/predict', methods=['POST'])
 def predict():
     """Handle the POST request and return the prediction."""
@@ -31,7 +38,7 @@ def predict():
         essay_text = data.get('essay')  # Extract the essay text
 
         if question and essay_text:
-            predicted_score = predict_essay_score(essay_text)
+            predicted_score = predict_essay_score(question, essay_text)
             predicted_score = float(predicted_score)
 
             response = {
